@@ -1,3 +1,3 @@
-# Networking client
+# Tick network client
 
-A demo networking client app on a tick-rate.
+A demo of a client that sends messages at a regular interval.
