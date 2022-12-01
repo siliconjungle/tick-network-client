@@ -1,6 +1,6 @@
 import { encode, decode } from 'messagepack'
-import { heartbeat, perf } from './utils'
-import { RoundTrips } from './messages'
+import { heartbeat } from './utils'
+import { RoundTrips, MessageSizes } from './messages'
 
 const isBrowser = typeof window !== 'undefined'
 
@@ -16,6 +16,8 @@ class Client {
 	latestAck = -1
 	running = false
 	roundTrips = new RoundTrips()
+	localMessageSizes = new MessageSizes()
+	serverMessageSizes = new MessageSizes()
 
 	constructor() {
     this.messages = []
@@ -62,6 +64,7 @@ class Client {
 
 	handleMessage = (event) => {
 		const messageList = decode(event.data)
+		this.serverMessageSizes.addMessageSize(event.data.byteLength)
 
 		if (messageList.seq !== -1) {
 			// this.roundTrips.setReceivedTime(messageList.seq, Date.now() - messageList.delay)
@@ -105,6 +108,8 @@ class Client {
 		this.latestServerSeq = -1
 		this.latestAck = -1
 		this.roundTrips.resetTimes()
+		this.localMessageSizes.resetSizes()
+		this.serverMessageSizes.resetSizes()
 		const connection = new WebSocket(SERVER_URL)
 		connection.binaryType = 'arraybuffer'
 		connection.addEventListener('message', this.handleMessage)
@@ -130,7 +135,10 @@ class Client {
 			}
 			// this.roundTrips.setSendTime(this.latestSeq, Date.now())
 			this.roundTrips.setSendTime(this.latestSeq, performance.now())
-			connection.send(encode(messageList))
+			const data = encode(messageList)
+			console.log('SEND', data.byteLength)
+			this.localMessageSizes.addMessageSize(data.byteLength)
+			connection.send(data)
 		}
 		this.messages = []
 	}

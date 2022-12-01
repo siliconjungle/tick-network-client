@@ -15,6 +15,43 @@ export const createMessage = {
 
 export const MAX_HISTORY = 100
 
+export class MessageSizes {
+  totalMessageSize = 0
+  totalMessageCount = 0
+  latestMessageSize = 0
+  history = []
+
+  resetSizes() {
+    this.totalMessageSize = 0
+    this.totalMessageCount = 0
+    this.latestMessageSize = 0
+  }
+
+  addMessageSize(size) {
+    this.totalMessageSize += size
+    this.totalMessageCount += 1
+    this.latestMessageSize = size
+
+    this.history.push(size)
+
+    if (this.history.length > MAX_HISTORY) {
+      this.history.shift()
+    }
+  }
+
+  getAverageMessageSize() {
+    return this.totalMessageSize / this.totalMessageCount
+  }
+
+  getLatestMessageSize() {
+    return this.latestMessageSize
+  }
+
+  getHistory() {
+    return this.history
+  }
+}
+
 export class RoundTrips {
   sendTimes = {}
   totalRoundTripTime = 0
