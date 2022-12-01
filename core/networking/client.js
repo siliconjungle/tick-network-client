@@ -64,7 +64,7 @@ class Client {
 		const messageList = decode(event.data)
 
 		if (messageList.seq !== -1) {
-			this.roundTrips.setReceivedTime(messageList.seq, Date.now())
+			this.roundTrips.setReceivedTime(messageList.seq, Date.now() - messageList.delay)
 		}
 
 		this.latestServerSeq = messageList.serverSeq
