@@ -1,3 +1,4 @@
+import EventEmitter from 'events'
 import { encode, decode } from 'messagepack'
 import { heartbeat } from './utils'
 import { RoundTrips, MessageSizes } from './messages'
@@ -10,7 +11,7 @@ const SEND_RATE = 33.333
 
 const SERVER_URL = 'ws://localhost:8080'
 
-class Client {
+class Client extends EventEmitter {
 	latestSeq = -1
 	latestServerSeq = -1
 	latestAck = -1
@@ -20,6 +21,7 @@ class Client {
 	serverMessageSizes = new MessageSizes()
 
 	constructor() {
+		super()
     this.messages = []
 		this.connection = null
 	}
@@ -75,6 +77,8 @@ class Client {
 		this.latestAck = messageList.seq
 		const messages = messageList.messages
 
+		console.log('_MESSAGE_LIST_', messageList)
+
 		this.lastPong = Date.now()
 
 		for (const message of messages) {
@@ -84,6 +88,7 @@ class Client {
 
 	handleOpen = (event) => {
 		console.log('_OPEN_')
+		this.emit('open', event)
 		this.start()
 	}
 
@@ -136,7 +141,6 @@ class Client {
 			// this.roundTrips.setSendTime(this.latestSeq, Date.now())
 			this.roundTrips.setSendTime(this.latestSeq, performance.now())
 			const data = encode(messageList)
-			console.log('SEND', data.byteLength)
 			this.localMessageSizes.addMessageSize(data.byteLength)
 			connection.send(data)
 		}

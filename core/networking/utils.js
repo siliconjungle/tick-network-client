@@ -1,3 +1,9 @@
+export const getRandomInt = (min, max) => {
+  min = Math.ceil(min)
+  max = Math.floor(max)
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 export const throttle = (fn, delay = 1000) => {
   let shouldWait = false
   let waitingArgs
@@ -37,5 +43,14 @@ export const heartbeat = (fn, delay = 1000) => {
     setTimeout(() => {
       heartbeat(fn, delay)
     }, delay)
+  }
+}
+
+export const randomHeartbeat = (fn, min = 5, max = 500) => {
+  const running = fn()
+  if (running === true) {
+    setTimeout(() => {
+      randomHeartbeat(fn, min, max)
+    }, getRandomInt(min, max))
   }
 }

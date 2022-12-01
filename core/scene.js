@@ -4,7 +4,9 @@ import {
   handleKeyUp,
 } from './controller'
 import Client from './networking/client'
-import { MAX_HISTORY } from './networking/messages'
+import Kernal from './networking/kernal'
+import { MAX_HISTORY, createMessage } from './networking/messages'
+import { randomHeartbeat, getRandomInt } from './networking/utils'
 
 class Scene {
   init (canvas) {
@@ -37,7 +39,37 @@ class Scene {
 
     const client = new Client()
     client.init()
+
     this.client = client
+
+    client.on('open', () => {
+      const snapshotOps = this.kernal.getSnapshotOps()
+      if (snapshotOps.length > 0) {
+        client.addMessage(createMessage.patch(snapshotOps))
+      }
+    })
+
+    this.kernal = new Kernal()
+
+    // This adds random messages to the client's message queue
+    randomHeartbeat(() => {
+      const ops = []
+
+      const opsCount = getRandomInt(1, 10)
+      for (let i = 0; i < opsCount; i++) {
+        ops.push({
+          version: [this.kernal.latestSeq, '123abc'],
+          id: 'test',
+          fields: [0, 1, 2],
+          values: [getRandomInt(0, 100), getRandomInt(0, 100), 'hello'],
+        })
+      }
+
+      const patch = createMessage.patch(ops)
+      client.addMessage(patch)
+      this.kernal.latestSeq++
+      return true
+    }, 5, 100)
   }
 
   shutdown () {
