@@ -11,10 +11,10 @@ const Home = () => {
   useEffect(() => {
     if (canvasRef.current) {
       game.init(canvasRef.current)
-    }
 
-    return () => {
-      game.shutdown()
+      return () => {
+        game.shutdown()
+      }
     }
   }, [canvasRef])
 

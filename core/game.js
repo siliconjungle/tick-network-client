@@ -6,6 +6,7 @@ class Game {
     this.lastTime = (new Date()).getTime()
     this.currentTime = 0
     this.dt = 0
+    this.running = false
 
     this.init = this.init.bind(this)
     this.shutdown = this.shutdown.bind(this)
@@ -16,6 +17,12 @@ class Game {
   }
 
   async init(canvas) {
+    if (this.running === true) {
+      return
+    }
+
+    this.running = true
+
     this.canvas = canvas
     this.context = canvas.getContext('2d')
 

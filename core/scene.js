@@ -51,8 +51,11 @@ class Scene {
     context.fillStyle = 'black'
     context.fillRect(0, 0, canvas.width, canvas.height)
     context.fillStyle = 'white'
-    context.font = '30px Arial'
-    context.fillText('Hello World', 10, 50)
+    context.font = '18px Arial'
+    const avgLatency = this.client?.roundTrips.getAverageRoundTripTime().toFixed(2) || 0
+    const latency = this.client?.roundTrips.getLatestRoundTripTime().toFixed(2) || 0
+    context.fillText(`Average latency: ${avgLatency}`, 10, 30)
+    context.fillText(`Latency: ${latency}`, 10, 60)
   }
 }
 

@@ -1,5 +1,6 @@
 import { encode, decode } from 'messagepack'
 import { heartbeat } from './utils'
+import { RoundTrips } from './messages'
 
 const isBrowser = typeof window !== 'undefined'
 
@@ -10,7 +11,11 @@ const SEND_RATE = 33.333
 const SERVER_URL = 'ws://localhost:8080'
 
 class Client {
+	latestSeq = -1
+	latestServerSeq = -1
+	latestAck = -1
 	running = false
+	roundTrips = new RoundTrips()
 
 	constructor() {
     this.messages = []
@@ -31,6 +36,9 @@ class Client {
 	start() {
     if (this.running === false) {
       this.running = true
+
+			this.lastPong = Date.now()
+
       heartbeat(() => {
 				this.detectDisconnect()
         this.sendMessages()
@@ -53,14 +61,20 @@ class Client {
 	}
 
 	handleMessage = (event) => {
-		const messages = decode(event.data)
+		const messageList = decode(event.data)
+
+		if (messageList.seq !== -1) {
+			this.roundTrips.setReceivedTime(messageList.seq, Date.now())
+		}
+
+		this.latestServerSeq = messageList.serverSeq
+		this.latestAck = messageList.seq
+		const messages = messageList.messages
 
 		this.lastPong = Date.now()
 
-		console.log('_SERVER_MESSAGE_', messages)
-
 		for (const message of messages) {
-			console.log('_HANDLE_MESSAGE_', message)
+			// noop
 		}
 	}
 
@@ -86,6 +100,10 @@ class Client {
 	}
 
 	createConnection = () => {
+		this.latestSeq = -1
+		this.latestServerSeq = -1
+		this.latestAck = -1
+		this.roundTrips.resetTimes()
 		const connection = new WebSocket(SERVER_URL)
 		connection.binaryType = 'arraybuffer'
 		connection.addEventListener('message', this.handleMessage)
@@ -103,7 +121,14 @@ class Client {
 	sendMessages() {
 		const connection = this.connection
 		if (connection?.readyState === WebSocket.OPEN) {
-			connection.send(encode(this.messages))
+			this.latestSeq++
+			const messageList = {
+				seq: this.latestSeq,
+				serverSeq: this.latestServerSeq,
+				messages: this.messages,
+			}
+			this.roundTrips.setSendTime(this.latestSeq, Date.now())
+			connection.send(encode(messageList))
 		}
 		this.messages = []
 	}
