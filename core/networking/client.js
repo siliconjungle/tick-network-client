@@ -1,5 +1,5 @@
 import { encode, decode } from 'messagepack'
-import { heartbeat } from './utils'
+import { heartbeat, perf } from './utils'
 import { RoundTrips } from './messages'
 
 const isBrowser = typeof window !== 'undefined'
@@ -64,7 +64,8 @@ class Client {
 		const messageList = decode(event.data)
 
 		if (messageList.seq !== -1) {
-			this.roundTrips.setReceivedTime(messageList.seq, Date.now() - messageList.delay)
+			// this.roundTrips.setReceivedTime(messageList.seq, Date.now() - messageList.delay)
+			this.roundTrips.setReceivedTime(messageList.seq, performance.now() - messageList.delay)
 		}
 
 		this.latestServerSeq = messageList.serverSeq
@@ -127,7 +128,8 @@ class Client {
 				serverSeq: this.latestServerSeq,
 				messages: this.messages,
 			}
-			this.roundTrips.setSendTime(this.latestSeq, Date.now())
+			// this.roundTrips.setSendTime(this.latestSeq, Date.now())
+			this.roundTrips.setSendTime(this.latestSeq, performance.now())
 			connection.send(encode(messageList))
 		}
 		this.messages = []

@@ -13,11 +13,14 @@ export const createMessage = {
   }),
 }
 
+export const MAX_HISTORY = 100
+
 export class RoundTrips {
   sendTimes = {}
   totalRoundTripTime = 0
   totalRoundTripCount = 0
   latestRoundTripTime = 0
+  history = []
 
   resetTimes() {
     this.sendTimes = {}
@@ -41,6 +44,10 @@ export class RoundTrips {
           delete this.sendTimes[key]
         }
       }
+      this.history.push(this.latestRoundTripTime)
+      if (this.history.length > MAX_HISTORY) {
+        this.history.shift()
+      }
     }
   }
 
@@ -50,5 +57,9 @@ export class RoundTrips {
 
   getLatestRoundTripTime() {
     return this.latestRoundTripTime
+  }
+
+  getHistory() {
+    return this.history
   }
 }
