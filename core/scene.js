@@ -9,7 +9,7 @@ import { MAX_HISTORY, createMessage } from './networking/messages'
 import { randomHeartbeat, getRandomInt } from './networking/utils'
 
 class Scene {
-  init (canvas) {
+  init (canvas, canvas3d) {
     registerActions([
       {
         name: 'left',
@@ -27,6 +27,22 @@ class Scene {
         name: 'down',
         keycode: '83', // s
       },
+      {
+        name: 'left2',
+        keycode: '74', // j
+      },
+      {
+        name: 'right2',
+        keycode: '76', // l
+      },
+      {
+        name: 'up2',
+        keycode: '73', // i
+      },
+      {
+        name: 'down2',
+        keycode: '75', // k
+      },
     ])
 
     canvas.addEventListener('keydown', (e) => {
@@ -34,6 +50,14 @@ class Scene {
     }, false)
 
     canvas.addEventListener('keyup', e => {
+      handleKeyUp(e)
+    }, false)
+
+    canvas3d.addEventListener('keydown', (e) => {
+      handleKeyDown(e)
+    }, false)
+
+    canvas3d.addEventListener('keyup', e => {
       handleKeyUp(e)
     }, false)
 
@@ -76,9 +100,7 @@ class Scene {
     this.client?.shutdown()
   }
 
-  update (dt) {
-
-  }
+  update (dt) {}
 
   render (canvas, context) {
     context.fillStyle = 'black'

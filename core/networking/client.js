@@ -77,8 +77,6 @@ class Client extends EventEmitter {
 		this.latestAck = messageList.seq
 		const messages = messageList.messages
 
-		console.log('_MESSAGE_LIST_', messageList)
-
 		this.lastPong = Date.now()
 
 		for (const message of messages) {

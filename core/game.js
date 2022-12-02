@@ -1,4 +1,5 @@
 import Renderer2D from './renderer2D'
+import Renderer3D from './renderer3D'
 import Scene from './scene'
 
 class Game {
@@ -13,10 +14,11 @@ class Game {
     this.update = this.update.bind(this)
     this.render = this.render.bind(this)
     this.renderer2D = new Renderer2D()
+    this.renderer3D = new Renderer3D()
     this.scene = new Scene()
   }
 
-  async init(canvas) {
+  async init(canvas, canvas3D) {
     if (this.running === true) {
       return
     }
@@ -25,9 +27,11 @@ class Game {
 
     this.canvas = canvas
     this.context = canvas.getContext('2d')
+    this.canvas3D = canvas3D
 
     this.renderer2D.init(this.context)
-    this.scene.init(this.canvas)
+    this.renderer3D.init(this.canvas3D)
+    this.scene.init(this.canvas, this.canvas3D)
 
     this.lastTime = (new Date()).getTime()
     this.currentTime = 0
@@ -47,6 +51,7 @@ class Game {
     this.dt = (this.currentTime - this.lastTime) / 1000
 
     this.renderer2D.update(this.dt)
+    this.renderer3D.update(this.dt)
     this.scene.update(this.dt)
 
     this.render()
@@ -60,6 +65,7 @@ class Game {
 
   render() {
     this.renderer2D.render(this.canvas, this.context)
+    this.renderer3D.render(this.canvas3D)
     this.scene.render(this.canvas, this.context)
   }
 }
