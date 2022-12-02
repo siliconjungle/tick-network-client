@@ -6,7 +6,7 @@ import {
 import Client from './networking/client'
 import Kernal from './networking/kernal'
 import { MAX_HISTORY, createMessage } from './networking/messages'
-import { randomHeartbeat, getRandomInt } from './networking/utils'
+// import { randomHeartbeat, getRandomInt } from './networking/utils'
 
 class Scene {
   init (canvas, canvas3d) {
@@ -43,6 +43,26 @@ class Scene {
         name: 'down2',
         keycode: '75', // k
       },
+      {
+        name: 'jump',
+        keycode: '67', // c
+      },
+      {
+        name: 'bomb',
+        keycode: '86', // v
+      },
+      {
+        name: 'jump2',
+        keycode: '78', // n
+      },
+      {
+        name: 'paint',
+        keycode: '49', // 1
+      },
+      {
+        name: 'paint2',
+        keycode: '50', // 2
+      },
     ])
 
     canvas.addEventListener('keydown', (e) => {
@@ -73,27 +93,33 @@ class Scene {
       }
     })
 
+    client.on('message', message => {
+      if (message.type === 'patch') {
+        this.kernal.applyOps(message.ops)
+      }
+    })
+
     this.kernal = new Kernal()
 
     // This adds random messages to the client's message queue
-    randomHeartbeat(() => {
-      const ops = []
+    // randomHeartbeat(() => {
+    //   const ops = []
 
-      const opsCount = getRandomInt(1, 10)
-      for (let i = 0; i < opsCount; i++) {
-        ops.push({
-          version: [this.kernal.latestSeq, '123abc'],
-          id: 'test',
-          fields: [0, 1, 2],
-          values: [getRandomInt(0, 100), getRandomInt(0, 100), 'hello'],
-        })
-      }
+    //   // const opsCount = getRandomInt(1, 10)
+    //   // for (let i = 0; i < opsCount; i++) {
+    //   //   ops.push({
+    //   //     version: [this.kernal.latestSeq, '123abc'],
+    //   //     id: 'test',
+    //   //     fields: [0, 1, 2],
+    //   //     values: [getRandomInt(0, 100), getRandomInt(0, 100), 'hello'],
+    //   //   })
+    //   // }
 
-      const patch = createMessage.patch(ops)
-      client.addMessage(patch)
-      this.kernal.latestSeq++
-      return true
-    }, 5, 100)
+    //   const patch = createMessage.patch(ops)
+    //   client.addMessage(patch)
+    //   // this.kernal.latestSeq++
+    //   return true
+    // }, 5, 100)
   }
 
   shutdown () {

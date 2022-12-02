@@ -6,6 +6,10 @@ class Kernal {
   versions = {}
   latestSeq = -1
 
+  getDocument(id) {
+    return this.documents[id]
+  }
+
   applyOps (ops) {
     // ops: [
     //   {

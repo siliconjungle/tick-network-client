@@ -29,9 +29,9 @@ class Game {
     this.context = canvas.getContext('2d')
     this.canvas3D = canvas3D
 
-    this.renderer2D.init(this.context)
-    this.renderer3D.init(this.canvas3D)
     this.scene.init(this.canvas, this.canvas3D)
+    this.renderer2D.init(this.context, this.scene)
+    this.renderer3D.init(this.canvas3D, this.scene)
 
     this.lastTime = (new Date()).getTime()
     this.currentTime = 0

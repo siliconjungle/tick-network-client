@@ -80,7 +80,7 @@ class Client extends EventEmitter {
 		this.lastPong = Date.now()
 
 		for (const message of messages) {
-			// noop
+			this.emit('message', message)
 		}
 	}
 
