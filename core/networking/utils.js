@@ -1,16 +1,12 @@
-export const fromPositionToIndex = ({ x, y, z }, width, height) =>
-  x + width * (y + height * z)
+export const fromPositionToIndex = ({ x, y, z }, height, depth) =>
+  x * (height * depth) + y * depth + z
 
-export const fromIndexToPosition = (i, width, height) => {
-  const z = Math.round(i / (width * height))
-  const y = Math.round((i - z * width * height) / width)
-  const x = i - width * (y + height * z)
+export const fromIndexToPosition = (index, height, depth) => {
+  const x = Math.floor(index / (height * depth))
+  const y = Math.floor((index % (height * depth)) / depth)
+  const z = index % depth
 
-  return {
-    x,
-    y,
-    z,
-  }
+  return { x, y, z }
 }
 
 export const getRandomInt = (min, max) => {

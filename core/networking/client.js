@@ -11,6 +11,107 @@ const SEND_RATE = 33.333
 
 const SERVER_URL = 'ws://localhost:8080'
 
+const encodeFields = (fields) => {
+	const ranges = []
+
+	// Lets run length encode the fields
+	for (let j = 0; j < fields.length; j++) {
+		// The fields structure is [field, field2, field3, ...]
+		// The run-length encoding scheme is as follows:
+		// [[field, amount], [field2, amount2], [field3, amount3], ...]
+		// Each field is an index. If a field is 1 larger than the previous field, the amount is increased by 1.
+
+		const field = fields[j]
+		let amount = 1
+
+		while (j < fields.length && fields[j + 1] === field + amount) {
+			amount++
+			j++
+		}
+
+		ranges.push([field, amount])
+	}
+
+	return ranges
+}
+
+const decodeFields = (ranges) => {
+	const fields = []
+
+	for (let j = 0; j < ranges.length; j++) {
+		const [field, amount] = ranges[j]
+
+		for (let k = 0; k < amount; k++) {
+			fields.push(field + k)
+		}
+	}
+
+	return fields
+}
+
+const encodeValues = (values) => {
+	const ranges = []
+
+	// Lets run length encode the values
+	for (let j = 0; j < values.length; j++) {
+		// The values structure is [value, value2, value3, ...]
+		// The run-length encoding scheme is as follows:
+		// [[value, amount], [value2, amount2], [value3, amount3], ...]
+
+		const value = values[j]
+		let amount = 1
+
+		while (j < values.length && values[j + 1] === value) {
+			amount++
+			j++
+		}
+
+		ranges.push([value, amount])
+	}
+
+	return ranges
+}
+
+const decodeValues = (ranges) => {
+	const values = []
+
+	for (let j = 0; j < ranges.length; j++) {
+		const [value, amount] = ranges[j]
+
+		for (let k = 0; k < amount; k++) {
+			values.push(value)
+		}
+	}
+
+	return values
+}
+
+const runlengthEncode = (message) => {
+	const ops = message.ops
+
+	for (let i = 0; i < ops.length; i++) {
+		const op = ops[i]
+
+		op.fields = encodeFields(op.fields)
+		op.values = encodeValues(op.values)
+	}
+
+	return message
+}
+
+const runlengthDecode = (message) => {
+	const ops = message.ops
+
+	for (let i = 0; i < ops.length; i++) {
+		const op = ops[i]
+
+		op.fields = decodeFields(op.fields)
+		op.values = decodeValues(op.values)
+	}
+
+	return message
+}
+
 class Client extends EventEmitter {
 	latestSeq = -1
 	latestServerSeq = -1
@@ -80,7 +181,12 @@ class Client extends EventEmitter {
 		this.lastPong = Date.now()
 
 		for (const message of messages) {
-			this.emit('message', message)
+			if (message.type === 'patch') {
+				const decodedMessage = runlengthDecode(message)
+				this.emit('message', decodedMessage)
+			} else {
+				this.emit('message', message)
+			}
 		}
 	}
 
@@ -124,7 +230,13 @@ class Client extends EventEmitter {
 	}
 
 	addMessage(message) {
-		this.messages.push(message)
+		if (message.type === 'patch') {
+			const encodedMessage = runlengthEncode(JSON.parse(JSON.stringify(message)))
+			// this.messages.push(message)
+			this.messages.push(encodedMessage)
+		} else {
+			this.messages.push(message)
+		}
 	}
 
 	sendMessages() {

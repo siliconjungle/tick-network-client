@@ -1,7 +1,9 @@
+import EventEmitter from 'events'
+
 const shouldSet = ([seq, agentId], [seq2, agentId2]) =>
   seq2 > seq || (seq === seq2 && agentId > agentId2)
 
-class Kernal {
+class Kernal extends EventEmitter {
   documents = {}
   versions = {}
   latestSeq = -1
@@ -27,19 +29,30 @@ class Kernal {
       this.versions[id] ??= []
       this.documents[id] ??= []
 
+      const currentOp = { version, id, fields: [], values: [] }
+
       for (let i = 0; i < fields.length; i++) {
         const currentVersion = this.versions[id][fields[i]]
         if (currentVersion === undefined || shouldSet(currentVersion, version)) {
           this.versions[id][fields[i]] = version
           this.documents[id][fields[i]] = values[i]
 
-          filteredOps.push(op)
+          currentOp.fields.push(fields[i])
+          currentOp.values.push(values[i])
+          // filteredOps.push(op)
         }
+      }
+
+      if (currentOp.fields.length > 0) {
+        filteredOps.push(currentOp)
       }
 
       this.latestSeq = Math.max(this.latestSeq, version[0])
     }
 
+    if (filteredOps.length > 0) {
+      this.emit('ops', filteredOps)
+    }
     return filteredOps
   }
 
