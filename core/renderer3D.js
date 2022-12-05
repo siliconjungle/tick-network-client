@@ -1,9 +1,23 @@
 import * as THREE from 'three'
 import { createSphereChunk } from './voxel-mesh'
 import { getActionState } from './controller'
-import { fromPositionToIndex, fromIndexToPosition } from './networking/utils'
+import { fromPositionToIndex, fromIndexToPosition, getRandomInt } from './networking/utils'
 import { createMessage } from './networking/messages'
-import { sprite, createCube, project2DArrayOnto3DArray } from './brick'
+import {
+  sprite,
+  spriteDominantIndex,
+  tile,
+  tileDominantIndex,
+  tile2,
+  tile2DominantIndex,
+  tile3,
+  tile3DominantIndex,
+  tile4,
+  tile4DominantIndex,
+  createCube,
+  project2DArrayOnto3DArray,
+  createCharacter,
+} from './brick'
 
 const WIDTH = 128
 const HEIGHT = 32
@@ -139,48 +153,101 @@ class Renderer3D {
       }
     }
 
-    const cube = createCube(16, 6)
+    const cube = createCube(16, spriteDominantIndex)
+    const cube2 = createCube(16, tileDominantIndex + 1)
+    const cube3 = createCube(16, tile2DominantIndex + 1)
+    const cube4 = createCube(16, tile3DominantIndex + 1)
+    const cube5 = createCube(16, tile4DominantIndex + 1)
+
     project2DArrayOnto3DArray(sprite, cube)
+    project2DArrayOnto3DArray(tile, cube2)
+    project2DArrayOnto3DArray(tile2, cube3)
+    project2DArrayOnto3DArray(tile3, cube4)
+    project2DArrayOnto3DArray(tile4, cube5)
 
     for (let tilesZ = 0; tilesZ < DEPTH; tilesZ += 16) {
+      const currentTileIndex = getRandomInt(0, 4)
       for (let z = 0; z < 16; z++) {
         for (let y = 0; y < 16; y++) {
           for (let x = 0; x < 16; x++) {
             const index = fromPositionToIndex({ x, y, z: z + tilesZ }, HEIGHT, DEPTH)
-            world[index] = cube[z][y][x]
+            if (currentTileIndex === 0) {
+              world[index] = cube[z][y][x]
+            } else if (currentTileIndex === 1) {
+              world[index] = cube2[z][y][x] + 1
+            } else if (currentTileIndex === 2) {
+              world[index] = cube3[z][y][x] + 1
+            } else if (currentTileIndex === 3) {
+              world[index] = cube4[z][y][x] + 1
+            } else if (currentTileIndex === 4) {
+              world[index] = cube5[z][y][x] + 1
+            }
           }
         }
       }
     }
 
     for (let tilesZ = 0; tilesZ < DEPTH; tilesZ += 16) {
+      const currentTileIndex = getRandomInt(0, 4)
       for (let z = 0; z < 16; z++) {
         for (let y = 0; y < 16; y++) {
           for (let x = 0; x < 16; x++) {
             const index = fromPositionToIndex({ x: x + WIDTH - 16, y, z: z + tilesZ }, HEIGHT, DEPTH)
-            world[index] = cube[z][y][x]
+            if (currentTileIndex === 0) {
+              world[index] = cube[z][y][x]
+            } else if (currentTileIndex === 1) {
+              world[index] = cube2[z][y][x] + 1
+            } else if (currentTileIndex === 2) {
+              world[index] = cube3[z][y][x] + 1
+            } else if (currentTileIndex === 3) {
+              world[index] = cube4[z][y][x] + 1
+            } else if (currentTileIndex === 4) {
+              world[index] = cube5[z][y][x] + 1
+            }
           }
         }
       }
     }
 
     for (let tilesX = 16; tilesX < DEPTH - 16; tilesX += 16) {
+      const currentTileIndex = getRandomInt(0, 4)
       for (let z = 0; z < 16; z++) {
         for (let y = 0; y < 16; y++) {
           for (let x = 0; x < 16; x++) {
             const index = fromPositionToIndex({ x: x + tilesX, y, z: z }, HEIGHT, DEPTH)
-            world[index] = cube[z][y][x]
+            if (currentTileIndex === 0) {
+              world[index] = cube[z][y][x]
+            } else if (currentTileIndex === 1) {
+              world[index] = cube2[z][y][x] + 1
+            } else if (currentTileIndex === 2) {
+              world[index] = cube3[z][y][x] + 1
+            } else if (currentTileIndex === 3) {
+              world[index] = cube4[z][y][x] + 1
+            } else if (currentTileIndex === 4) {
+              world[index] = cube5[z][y][x] + 1
+            }
           }
         }
       }
     }
 
     for (let tilesX = 16; tilesX < DEPTH - 16; tilesX += 16) {
+      const currentTileIndex = getRandomInt(0, 4)
       for (let z = 0; z < 16; z++) {
         for (let y = 0; y < 16; y++) {
           for (let x = 0; x < 16; x++) {
             const index = fromPositionToIndex({ x: x + tilesX, y, z: z + DEPTH - 16 }, HEIGHT, DEPTH)
-            world[index] = cube[z][y][x]
+            if (currentTileIndex === 0) {
+              world[index] = cube[z][y][x]
+            } else if (currentTileIndex === 1) {
+              world[index] = cube2[z][y][x] + 1
+            } else if (currentTileIndex === 2) {
+              world[index] = cube3[z][y][x] + 1
+            } else if (currentTileIndex === 3) {
+              world[index] = cube4[z][y][x] + 1
+            } else if (currentTileIndex === 4) {
+              world[index] = cube5[z][y][x] + 1
+            }
           }
         }
       }
