@@ -65,3 +65,13 @@ export const randomHeartbeat = (fn, min = 5, max = 500) => {
     }, getRandomInt(min, max))
   }
 }
+
+export const distance = (vec1, vec2) => {
+  // Calculate the difference between the x, y, and z coordinates of the two vectors
+  const dx = vec1.x - vec2.x
+  const dy = vec1.y - vec2.y
+  const dz = vec1.z - vec2.z
+
+  // Use the Pythagorean theorem to calculate the distance between the two vectors
+  return Math.sqrt(dx * dx + dy * dy + dz * dz)
+}

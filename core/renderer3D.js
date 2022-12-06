@@ -1,7 +1,12 @@
 import * as THREE from 'three'
 import { createSphereChunk } from './voxel-mesh'
 import { getActionState } from './controller'
-import { fromPositionToIndex, fromIndexToPosition, getRandomInt } from './networking/utils'
+import {
+  fromPositionToIndex,
+  fromIndexToPosition,
+  getRandomInt,
+  distance,
+} from './networking/utils'
 import { createMessage } from './networking/messages'
 import {
   sprite,
@@ -16,11 +21,11 @@ import {
   tile4DominantIndex,
   createCube,
   project2DArrayOnto3DArray,
-  createCharacter,
 } from './brick'
+import BoxGeometryLess from './box-geometry-less'
 
 const WIDTH = 128
-const HEIGHT = 32
+const HEIGHT = 48
 const DEPTH = 128
 const INSTANCE_COUNT = WIDTH * HEIGHT * DEPTH
 const PLAYER_RADIUS = 6
@@ -65,10 +70,13 @@ const PALETTE = [
   0x8a6f30
 ]
 
+// let first = true
+
 class Renderer3D {
   changes = {}
   entityChanges = {}
   lastEntityChanges = {}
+  t = 0
   init(canvas, gameScene) {
     this.gameScene = gameScene
     this.kernal = gameScene.kernal
@@ -100,7 +108,7 @@ class Renderer3D {
 
     this.camera.position.set(0, 1, -1)
     this.camera.lookAt(0, 0, 0)
-    this.camera.position.set(0, 95, -100)
+    this.camera.position.set(0, 125, -100)
 
     this.scene = new THREE.Scene()
 
@@ -129,9 +137,12 @@ class Renderer3D {
   }
 
   setupScene() {
-    const geometry = new THREE.BoxGeometry(1, 1, 1)
+    // const geometry = new THREE.BoxGeometry(1, 1, 1)
+    const geometry = new BoxGeometryLess(1, 1, 1)
     const material = new THREE.MeshStandardMaterial()
     // const material = new THREE.MeshBasicMaterial()
+    // const mesh2 = new THREE.Mesh(geometry2, material)
+    // this.scene.add(mesh2)
     const mesh = new THREE.InstancedMesh(geometry, material, INSTANCE_COUNT)
     mesh.frustumCulled = true
     this.mesh = mesh
@@ -339,6 +350,30 @@ class Renderer3D {
     this.player.vy = Math.max(this.player.vy, -MAX_VELOCITY)
     this.player.y += this.player.vy * dt
 
+    // Starting from the players feet, check if there is a block below them
+    const player = this.player
+    const position = { x: Math.round(player.x) - PLAYER_RADIUS, y: Math.round(player.y), z: Math.round(player.z) - PLAYER_RADIUS }
+    const world = this.kernal.getDocument('world')
+
+    for (let x = position.x; x < position.x + PLAYER_RADIUS * 2; x++) {
+      for (let z = position.z; z < position.z + PLAYER_RADIUS * 2; z++) {
+        for (let y = position.y + PLAYER_RADIUS * 0.25; y >= 0; y--) {
+          if (y >= HEIGHT) continue
+
+          const index = fromPositionToIndex({ x, y: Math.floor(y), z }, HEIGHT, DEPTH)
+
+          if (world[index] !== undefined && world[index] !== 0) {
+            if (this.player.y < y + 1) {
+              this.player.y = y
+              this.player.vy = 0
+              this.player.grounded = true
+              break
+            }
+          }
+        }
+      }
+    }
+
     if (this.player.y < 0) {
       this.player.y = 0
       this.player.vy = 0
@@ -408,6 +443,8 @@ class Renderer3D {
       const patch = createMessage.patch(ops)
       this.gameScene.client.addMessage(patch)
     }
+
+    this.t += dt
   }
 
   renderMesh(mesh, position) {
@@ -471,7 +508,12 @@ class Renderer3D {
 
     this.updateEntityRendersAndChunk(chunk)
 
+    // if (first) {
+      // this.initRenderScene(chunk)
+      // first = false
+    // } else {
     this.renderScene(chunk)
+    // }
     this.renderer.render(this.scene, this.camera)
     this.changes = {}
   }
@@ -480,36 +522,70 @@ class Renderer3D {
     const mesh = this.mesh
     const dummy = this.dummy
     const color = this.color
+    let count = 0
+
     if (mesh) {
       const xOffset = (WIDTH - 1) / 2
       const yOffset = (HEIGHT - 1) / 2
       const zOffset = (DEPTH - 1) / 2
 
-      const keys = Object.keys(this.changes)
-      const indices = keys.map(key => parseInt(key))
+      // const keys = Object.keys(this.changes)
+      // const indices = keys.map(key => parseInt(key))
 
-      for (let i = 0; i < indices.length; i++) {
-        const index = indices[i]
+      // const heightMap = []
+
+      const wigglyFactor = 0.5 //How many waves you have per unit distance
+      const speedFactor = 6 //How quickly your waves wiggle
+      const maxHeight = 3 //How tall your waves are
+
+      // for (let z = 0; z < DEPTH; z++) {
+      //   heightMap[z] = []
+      //   for (let x = 0; x < WIDTH; x++) {
+      //     // const height = Math.sin(x + this.t) + Math.cos(z + this.t)
+      //     heightMap[z][x] = height
+      //   }
+      // }      
+
+      for (let index = 0; index < INSTANCE_COUNT; index++) {
+      // for (let i = 0; i < indices.length; i++) {
+        // const index = indices[i]
         const { x, y, z } = fromIndexToPosition(index, HEIGHT, DEPTH)
-        if (chunk[index] === 0) {
-          dummy.scale.set(0, 0, 0)
-          dummy.position.set(xOffset - x, yOffset - y, zOffset - z)
-        } else {
-          dummy.scale.set(1, 1, 1)
-          mesh.setColorAt(index, color.setHex(PALETTE[chunk[index] - 1]))
+
+        const height = Math.sin( (distance({ x, y, z }, { x: WIDTH * 0.5, y: 0, z: DEPTH * 0.5 }) * wigglyFactor) - (this.t * speedFactor)) * maxHeight + 8
+        // const height = Math.sin(x + this.t) + Math.cos(z + this.t)
+        // const height = heightMap[z][x]
+
+        if (y <= height || chunk[index] !== 0) {
+        // if (chunk[index] === 0) {
+          // dummy.scale.set(0, 0, 0)
+          // dummy.position.set(xOffset - x, yOffset - y, zOffset - z)
+        // } else {
+        // if (chunk[index] !== 0) {
+          count++
+          // dummy.scale.set(1, 1, 1)
+          const colorIndex = chunk[index] - 1 === -1 ? 26 : chunk[index] - 1
+          mesh.setColorAt(count, color.setHex(PALETTE[colorIndex]))
+          // mesh.setColorAt(count, color.setHex(PALETTE[17]))
           dummy.position.set(xOffset - x, yOffset + y, zOffset - z)
+
+          dummy.updateMatrix()
+          mesh.setMatrixAt(count, dummy.matrix)
         }
 
-        dummy.updateMatrix()
-        mesh.setMatrixAt(index, dummy.matrix)
+        // dummy.updateMatrix()
+        // mesh.setMatrixAt(index, dummy.matrix)
       }
 
-      if (indices.length > 0) {
+      // if (count !== mesh.count) {
+      mesh.count = count
+      // }
+
+      // if (indices.length > 0) {
         mesh.instanceMatrix.needsUpdate = true
         if (mesh.instanceColor !== null) {
           mesh.instanceColor.needsUpdate = true
         }
-      }
+      // }
     }
   }
 }
